@@ -1,0 +1,112 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  password      String
+  role          Role      @default(AGENT)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  leads         Lead[]
+  properties    Property[]
+  transactions  Transaction[]
+}
+
+model Lead {
+  id          String    @id @default(cuid())
+  firstName   String
+  lastName    String
+  email       String
+  phone       String?
+  status      LeadStatus @default(NEW)
+  source      String
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  agent       User      @relation(fields: [agentId], references: [id])
+  agentId     String
+  properties  Property[]
+}
+
+model Property {
+  id          String    @id @default(cuid())
+  address     String
+  city        String
+  state       String
+  zipCode     String
+  price       Float
+  bedrooms    Int
+  bathrooms   Float
+  squareFeet  Int?
+  description String?
+  status      PropertyStatus @default(ACTIVE)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  agent       User      @relation(fields: [agentId], references: [id])
+  agentId     String
+  leads       Lead[]
+  transactions Transaction[]
+}
+
+model Transaction {
+  id          String    @id @default(cuid())
+  type        TransactionType
+  status      TransactionStatus @default(PENDING)
+  amount      Float
+  closingDate DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  agent       User      @relation(fields: [agentId], references: [id])
+  agentId     String
+  property    Property  @relation(fields: [propertyId], references: [id])
+  propertyId  String
+}
+
+enum Role {
+  ADMIN
+  AGENT
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  NEGOTIATING
+  CLOSED
+  LOST
+}
+
+enum PropertyStatus {
+  ACTIVE
+  PENDING
+  SOLD
+  OFF_MARKET
+}
+
+enum TransactionType {
+  SALE
+  PURCHASE
+  RENTAL
+}
+
+enum TransactionStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
